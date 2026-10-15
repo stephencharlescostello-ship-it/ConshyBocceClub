@@ -42,7 +42,7 @@ export default async function HistoryIndex() {
                       <span className="font-display text-lg font-bold">{s.name}</span>
                       {s.status === "active" && <span className="rounded-full bg-accent/15 px-2 py-0.5 text-[11px] font-bold uppercase text-accent">Current</span>}
                     </span>
-                    <span className="block text-xs text-muted">Started {fmtDate(s.starts_on)} · {s.regular_weeks} weeks</span>
+                    <span className="block text-xs text-muted">Started {fmtDate(`${s.starts_on}T12:00:00`)} · {s.regular_weeks} weeks</span>
                     {playoffs.length > 0 && <span className="mt-1 block text-sm"><Trophy className="mr-1 inline h-4 w-4 text-accent" />{playoffs.join(" · ")}</span>}
                     {playoffs.length === 0 && nights.length > 0 && (
                       <span className="mt-1 block text-sm text-muted">
