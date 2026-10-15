@@ -1,26 +1,70 @@
 {
-  "name": "scratch-2026-10-15-d3ce2b",
-  "version": "0.1.0",
+  "name": "cbc-shuffle",
+  "version": "1.0.0",
   "private": true,
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:rls": "vitest run --config vitest.rls.config.ts",
+    "test:e2e": "playwright test",
+    "db:start": "supabase start",
+    "db:stop": "supabase stop",
+    "db:reset": "supabase db reset",
+    "db:types": "supabase gen types typescript --local --schema public > src/lib/supabase/database.types.ts",
+    "db:migrate": "supabase db push",
+    "setup": "supabase start && npm run db:reset",
+    "screenshots": "playwright test --config playwright.screens.config.ts",
+    "lighthouse": "node scripts/lighthouse.mjs",
+    "posters": "node scripts/build-pdfs.mjs",
+    "import:sheet": "tsx scripts/import-sheet.ts",
+    "zip": "node scripts/zip.mjs"
   },
   "dependencies": {
+    "@capacitor/cli": "^8.5.3",
+    "@capacitor/core": "^8.5.3",
+    "@date-fns/tz": "^1.5.0",
+    "@supabase/ssr": "^0.12.7",
+    "@supabase/supabase-js": "^2.118.0",
+    "date-fns": "^4.4.0",
+    "idb-keyval": "^6.3.0",
+    "lucide-react": "^1.57.0",
     "next": "16.4.1",
+    "papaparse": "^5.7.0",
+    "pdf-lib": "^1.17.1",
+    "qrcode": "^1.5.4",
     "react": "19.3.0",
-    "react-dom": "19.3.0"
+    "react-dom": "19.3.0",
+    "react-markdown": "^10.1.0",
+    "remark-gfm": "^4.0.1",
+    "web-push": "^3.6.7",
+    "zod": "^4.6.7"
   },
   "devDependencies": {
+    "@playwright/test": "^1.64.1",
     "@tailwindcss/turbopack": "^4",
-    "@types/node": "^20",
+    "@types/node": "^24.19.2",
+    "@types/papaparse": "^5.5.2",
+    "@types/pg": "^8.23.1",
+    "@types/qrcode": "^1.5.6",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "@types/web-push": "^3.6.4",
+    "dotenv": "^18.0.8",
     "eslint": "^9",
     "eslint-config-next": "16.4.1",
+    "pg": "^8.23.1",
     "tailwindcss": "^4",
-    "typescript": "^5"
+    "tsx": "^4.23.15",
+    "typescript": "^5",
+    "vitest": "^5.0.5"
+  },
+  "description": "Conshohocken Bocce Club shuffleboard league PWA",
+  "engines": {
+    "node": ">=20"
   }
 }
