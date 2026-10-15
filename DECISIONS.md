@@ -39,3 +39,19 @@ Each entry: what was ambiguous, what was chosen, and where it is configurable.
 ## Stats
 - Hanger of the Week: most hangers Mon–Sun among live-scored games; ties broken by points per frame.
 - Quick Entry matches contribute game wins, points for/against and streaks; frame stats are skipped for them.
+
+## Build-time decisions (added while implementing)
+- **Scorekeeper UX**: taps add weights to the *current frame* for one side (+1/+2/+3/Hanger); tapping the other side restarts the frame for that side because only one side scores per frame. "Next frame" commits; "Wash" records a 0–0 frame; "Undo" removes the last weight, or the last committed frame when the frame is empty. Every committed frame carries a device-generated UUID so a retry or an offline replay can never double-count.
+- **Who may run the scorekeeper**: captains of either team, a scorekeeper the captain designates on the match page, and admins. Other players get the live view. Enforced in the database (`can_score_match`), not just the UI.
+- **Server-side validation lives in Postgres RPCs** (`record_frame`, `submit_match_result`, `confirm_match`, `dispute_match`, `resolve_dispute`, `post_message`, …) so a crafted request from any client is rejected the same way as a UI mistake. Server actions only add zod parsing, notifications and cache revalidation.
+- **Standings tiebreak explanation**: each row stores the tiebreaker that separated it from the row below ("Ahead on head-to-head"); unresolved ties say "commissioner decision" and the admin sets the order on the season page.
+- **Clinched/eliminated markers** appear once 60% of the regular season is played and use a win-count approximation (ignoring tiebreakers), documented in-app.
+- **Power rankings formula**: 50 × match win % + 30 × game win % + 2 × point differential per match + 3 × wins in the last five, shown on the page.
+- **Share cards** are 1080×1920 PNGs rendered with `next/og` (Satori) from live data; no image assets to maintain.
+- **Table QR deep link** (`/t/<token>`) picks the live match on that table, else the match starting within 20 minutes, else the next one today; captains land on the scorekeeper, everyone else on the live view, and unknown tokens go to the schedule.
+- **Playwright runs both device profiles in Chromium** (iPhone 15 and Pixel 7 viewports/user agents). WebKit was skipped because this macOS build has no WebKit Playwright support; the PWA itself targets Safari 16.4+.
+- **Local dev server port**: the Mac used for building had port 3000 reserved at the time, so `.claude/launch.json`, `.env.local` and the Supabase redirect list also allow 3001. Nothing else depends on the port.
+- **Hanger of the Week** is recomputed for a match's week every time a result confirms, from live-scored frames and the recorded lineups.
+- **Audit log** is written by a trigger on every material change to a match (status, scores, winner, time, table, forfeit) and explicitly by admin actions (season edits, dispute resolutions, schedule generation, moderation).
+- **Seed accounts** are created directly in `auth.users` (Supabase local only) so Playwright and the dev login can sign in without email. Production never uses the seed.
+- **Club address** is seeded as a town-level placeholder ("Conshohocken Bocce Club, Conshohocken, PA 19428") because the exact street address was not provided; set it in Admin → League settings.

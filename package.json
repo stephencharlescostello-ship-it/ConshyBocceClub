@@ -20,8 +20,8 @@
     "setup": "supabase start && npm run db:reset",
     "screenshots": "playwright test --config playwright.screens.config.ts",
     "lighthouse": "node scripts/lighthouse.mjs",
-    "posters": "node scripts/build-pdfs.mjs",
-    "import:sheet": "tsx scripts/import-sheet.ts",
+    "posters": "tsx scripts/build-pdfs.ts",
+    "seed:generate": "tsx scripts/generate-seed.ts",
     "zip": "node scripts/zip.mjs"
   },
   "dependencies": {
@@ -57,6 +57,7 @@
     "dotenv": "^18.0.8",
     "eslint": "^9",
     "eslint-config-next": "16.4.1",
+    "lighthouse": "^13.5.0",
     "pg": "^8.23.1",
     "tailwindcss": "^4",
     "tsx": "^4.23.15",

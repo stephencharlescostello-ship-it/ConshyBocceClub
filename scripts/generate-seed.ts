@@ -239,8 +239,8 @@ const fallResults = new Map<string, MatchResult[]>(); // night id → results (c
 const hangersByPlayerWeek = new Map<string, number>(); // `${week}|${playerId}` → hangers
 const badgeRows = new Set<string>();
 const teamWins = new Map<string, number>();
-let week5Matches: { id: string; team: Team; opp: Team; weekday: number; slot: number }[] = [];
-let streakByTeam = new Map<string, number>();
+const week5Matches: { id: string; team: Team; opp: Team; weekday: number; slot: number }[] = [];
+const streakByTeam = new Map<string, number>();
 for (const night of nights) {
   fallResults.set(night.id, []);
   const sched = generateRoundRobin(night.teams.map((t) => t.id), { rounds: 2, tableIds: TABLES.map((t) => t.id), slotsPerWeek: 3, seed: night.weekday });

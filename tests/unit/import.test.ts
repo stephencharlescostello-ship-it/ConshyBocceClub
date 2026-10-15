@@ -27,7 +27,7 @@ describe("spreadsheet import", () => {
     expect(paired.filter((p) => p.night === "Monday")).toHaveLength(30);
   });
   it("flags disagreeing reports and impossible scores", () => {
-    const rows = [
+    const rows: Record<string, string>[] = [
       { Night: "Monday", Week: "Week 1", "Your Team": "A", "Opposing Team": "B", "Game 1 [Your Score]": "15", "Game 1 [Opponent's Score]": "3", "Game 2 [Your Score]": "15", "Game 2 [Opponent's Score]": "9" },
       { Night: "Monday", Week: "Week 1", "Your Team": "B", "Opposing Team": "A", "Game 1 [Your Score]": "3", "Game 1 [Opponent's Score]": "15", "Game 2 [Your Score]": "10", "Game 2 [Opponent's Score]": "15" },
       { Night: "Tuesday", Week: "Week 1", "Your Team": "C", "Opposing Team": "D", "Game 1 [Your Score]": "16", "Game 1 [Opponent's Score]": "3", "Game 2 [Your Score]": "15", "Game 2 [Opponent's Score]": "9" },
