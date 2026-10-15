@@ -1,0 +1,10 @@
+[
+  {"q": "How do I install the app?", "a": "On iPhone, open the site in Safari, tap **Share**, then **Add to Home Screen**. On Android, tap **Install** when the banner appears or use the browser menu. See the Install page for pictures."},
+  {"q": "Do I need an account to see standings?", "a": "No. Schedule, standings, results, events and rules are public. Sign in only to keep score, chat and get notifications."},
+  {"q": "How do I join my team?", "a": "Ask your captain for the 6-character join code, or pick your name from the roster the commissioner imported."},
+  {"q": "I entered the wrong score. What now?", "a": "If the match has not been confirmed yet, the opposing captain can dispute it and the commissioner will fix it. If it is already confirmed, message the commissioner from the Rules page."},
+  {"q": "Why can't I get push notifications on my iPhone?", "a": "iPhones only allow web push for apps that are added to the Home Screen (iOS 16.4 or newer). Install the app first, then turn notifications on in Settings."},
+  {"q": "What counts as a hanger?", "a": "A weight that hangs over the far end of the board. It scores 4 points. Line calls go to the lower zone."},
+  {"q": "What are the playoffs?", "a": "After the 10-week double round robin, the top four teams on each night play 1 v 4 and 2 v 3, then a final. The five night champions can meet in the Champion of Champions night."},
+  {"q": "How are ties broken in the standings?", "a": "Match win %, then head-to-head, then game differential, then point differential, then a commissioner decision. Tap a rank in the standings to see which rule applied."}
+]

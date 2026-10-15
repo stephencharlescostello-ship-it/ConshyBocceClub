@@ -39,3 +39,14 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+# supabase local state
+/supabase/.temp
+/supabase/.branches
+# test and build output
+/playwright-report
+/test-results
+/screenshots/*.png
+/lighthouse
+/dist
+*.zip
+/.next-docs
