@@ -1,44 +1,62 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Trophy } from "lucide-react";
+import { ChevronRight, Trophy } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
-import { getSeasons } from "@/lib/data/league";
+import { Empty } from "@/components/ui/empty";
 import { fmtDate } from "@/lib/util/time";
 
-export const metadata: Metadata = { title: "History" };
+export const metadata: Metadata = { title: "History & Hall of Fame" };
 export const dynamic = "force-dynamic";
 
-export default async function HistoryPage() {
-  const seasons = await getSeasons();
+type Champion = { season_id: string; details: { night?: string; record?: string } | null; team: { name: string } | null };
+
+export default async function HistoryIndex() {
   const supabase = await createClient();
-  const { data: champs } = await supabase.from("awards").select("season_id, details, team:teams(id, name, night:league_nights(name))").eq("kind", "night_champion");
-  const { data: records } = await supabase.from("awards").select("season_id, kind, value, details, player:player_profiles(display_name), team:teams(name)").in("kind", ["season_record_hangers", "season_record_streak", "season_record_points"]);
+  const [{ data: seasons }, { data: awards }, { data: brackets }] = await Promise.all([
+    supabase.from("seasons").select("id, name, slug, status, starts_on, regular_weeks, notes").neq("status", "draft").order("starts_on", { ascending: false }),
+    supabase.from("awards").select("season_id, details, team:teams(name)").eq("kind", "night_champion"),
+    supabase.from("playoff_brackets").select("season_id, name, status, champion:teams(name)").eq("status", "complete"),
+  ]);
+  const champs = new Map<string, Champion[]>();
+  for (const a of (awards ?? []) as unknown as Champion[]) champs.set(a.season_id, [...(champs.get(a.season_id) ?? []), a]);
+  const playoffChamps = new Map<string, string[]>();
+  for (const b of (brackets ?? []) as unknown as { season_id: string; name: string; champion: { name: string } | null }[]) {
+    if (b.champion) playoffChamps.set(b.season_id, [...(playoffChamps.get(b.season_id) ?? []), `${b.name}: ${b.champion.name}`]);
+  }
   return (
     <>
-      <h1 className="font-display text-3xl font-extrabold">History &amp; Hall of Fame</h1>
-      <p className="mt-1 text-sm text-muted">Seasons are archived, never deleted.</p>
-      <ul className="mt-4 flex flex-col gap-3">
-        {seasons.map((s) => {
-          const c = (champs ?? []).filter((x) => x.season_id === s.id);
-          const r = (records ?? []).filter((x) => x.season_id === s.id);
-          return (
-            <li key={s.id} className="card p-4">
-              <div className="flex items-center justify-between">
-                <Link href={`/history/${s.slug}`} className="font-display text-xl font-bold">{s.name}</Link>
-                <span className={`chip ${s.status === "active" ? "bg-primary-soft text-success" : "bg-elev-2"}`}>{s.status === "active" ? "In progress" : s.status === "archived" ? "Archived" : "Draft"}</span>
-              </div>
-              <p className="text-xs text-muted">Started {fmtDate(s.starts_on + "T12:00:00")} · {s.regular_weeks} weeks</p>
-              {c.length > 0 && (
-                <ul className="mt-3 flex flex-col gap-1">
-                  {c.map((x, i) => { const t = x.team as unknown as { id: string; name: string; night: { name: string } | null } | null; return t ? <li key={i} className="flex items-center gap-2 text-sm"><Trophy className="h-4 w-4 text-accent" /> <span className="text-muted">{t.night?.name}:</span> <Link href={`/teams/${t.id}`} className="font-semibold">{t.name}</Link>{(x.details as { record?: string })?.record ? <span className="text-xs text-subtle">({(x.details as { record?: string }).record})</span> : null}</li> : null; })}
-                </ul>
-              )}
-              {r.length > 0 && <ul className="mt-2 text-xs text-muted">{r.map((x, i) => <li key={i}>{x.kind.replace("season_record_", "Most ")}: {(x.player as unknown as { display_name: string } | null)?.display_name ?? (x.team as unknown as { name: string } | null)?.name} ({x.value})</li>)}</ul>}
-              <Link href={`/history/${s.slug}`} className="mt-3 inline-block text-sm font-semibold text-accent">Final standings &amp; records →</Link>
-            </li>
-          );
-        })}
-      </ul>
+      <h1 className="font-display text-3xl font-extrabold">History & Hall of Fame</h1>
+      <p className="mt-1 text-sm text-muted">Every season, past and present. Tap one for its final standings and records.</p>
+      {!seasons?.length ? (
+        <div className="mt-4"><Empty title="No seasons yet">The first season appears here once the commissioner creates it.</Empty></div>
+      ) : (
+        <ul className="mt-4 flex flex-col gap-2">
+          {seasons.map((s) => {
+            const nights = champs.get(s.id) ?? [];
+            const playoffs = playoffChamps.get(s.id) ?? [];
+            return (
+              <li key={s.id}>
+                <Link href={`/history/${s.slug}`} className="card flex items-center gap-3 p-4">
+                  <span className="min-w-0 flex-1">
+                    <span className="flex items-center gap-2">
+                      <span className="font-display text-lg font-bold">{s.name}</span>
+                      {s.status === "active" && <span className="rounded-full bg-accent/15 px-2 py-0.5 text-[11px] font-bold uppercase text-accent">Current</span>}
+                    </span>
+                    <span className="block text-xs text-muted">Started {fmtDate(s.starts_on)} · {s.regular_weeks} weeks</span>
+                    {playoffs.length > 0 && <span className="mt-1 block text-sm"><Trophy className="mr-1 inline h-4 w-4 text-accent" />{playoffs.join(" · ")}</span>}
+                    {playoffs.length === 0 && nights.length > 0 && (
+                      <span className="mt-1 block text-sm text-muted">
+                        {nights.map((n) => `${n.details?.night ?? "Night"}: ${n.team?.name ?? "—"}${n.details?.record ? ` (${n.details.record})` : ""}`).join(" · ")}
+                      </span>
+                    )}
+                  </span>
+                  <ChevronRight className="h-5 w-5 shrink-0 text-subtle" />
+                </Link>
+              </li>
+            );
+          })}
+        </ul>
+      )}
     </>
   );
 }
