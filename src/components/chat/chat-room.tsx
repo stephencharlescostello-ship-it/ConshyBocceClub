@@ -2,6 +2,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { Send, Image as ImageIcon, Smile, Reply, Trash2, Pencil, Flag, X, Bell, BellOff, AtSign, Film } from "lucide-react";
 import { getBrowserClient } from "@/lib/supabase/client";
+import { realtimeClient } from "@/lib/supabase/realtime";
 import { postMessage, editMessage, deleteMessage, toggleReaction, reportMessage, setChannelMode, markRead } from "@/lib/actions/chat";
 import { compressImage } from "@/lib/util/image";
 import { Avatar } from "@/components/ui/avatar";
@@ -37,6 +38,8 @@ export function ChatRoom({ channelId, channelSlug, rules, initial, me, mode, men
   // Realtime: new/edited/deleted messages and reactions
   useEffect(() => {
     const supabase = getBrowserClient();
+    let channel: ReturnType<typeof supabase.channel> | null = null;
+    let disposed = false;
     const load = async (id: string) => {
       const { data } = await supabase.from("messages").select("id, author_id, is_bot, body, photo_url, gif_url, reply_to, created_at, edited_at, deleted_at, client_id, author:player_profiles!messages_author_id_fkey(display_name, avatar_url), reactions(emoji, player_id)").eq("id", id).maybeSingle();
       if (!data) return;
@@ -49,12 +52,15 @@ export function ChatRoom({ channelId, channelSlug, rules, initial, me, mode, men
       setTimeout(scrollDown, 50);
       markRead(channelId);
     };
-    const channel = supabase
-      .channel(`chat:${channelId}`)
-      .on("postgres_changes", { event: "*", schema: "public", table: "messages", filter: `channel_id=eq.${channelId}` }, (p) => { const id = (p.new as { id?: string })?.id; if (id) load(id); })
-      .on("postgres_changes", { event: "*", schema: "public", table: "reactions" }, (p) => { const id = ((p.new as { message_id?: string })?.message_id ?? (p.old as { message_id?: string })?.message_id); if (id && messages.some((m) => m.id === id)) load(id); else if (id) load(id); })
-      .subscribe();
-    return () => { supabase.removeChannel(channel); };
+    realtimeClient().then((client) => {
+      if (disposed) return;
+      channel = client
+        .channel(`chat:${channelId}`)
+        .on("postgres_changes", { event: "*", schema: "public", table: "messages", filter: `channel_id=eq.${channelId}` }, (p) => { const id = (p.new as { id?: string })?.id; if (id) load(id); })
+        .on("postgres_changes", { event: "*", schema: "public", table: "reactions" }, (p) => { const id = ((p.new as { message_id?: string })?.message_id ?? (p.old as { message_id?: string })?.message_id); if (id) load(id); })
+        .subscribe();
+    });
+    return () => { disposed = true; if (channel) supabase.removeChannel(channel); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [channelId]);
 

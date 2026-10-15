@@ -15,13 +15,16 @@ export async function sql<T = Record<string, unknown>>(text: string, params: unk
 
 /** Signs a page in as a seeded user through the dev login route (ALLOW_DEV_LOGIN=true locally). */
 export async function signIn(page: Page, email: string, next = "/") {
+  await page.addInitScript(() => { try { localStorage.setItem("installDismissed", "1"); } catch {} });
   await page.goto(`/dev/login?as=${encodeURIComponent(email)}&next=${encodeURIComponent(next)}`);
   await page.waitForURL((u) => !u.pathname.startsWith("/dev/") && !u.pathname.startsWith("/auth/"));
+  await page.waitForLoadState("networkidle").catch(() => {});
 }
 
 export async function newSignedInPage(browser: Browser, email: string, next = "/") {
   const ctx = await browser.newContext({ permissions: ["notifications"] });
   const page = await ctx.newPage();
+  await page.addInitScript(() => { try { localStorage.setItem("installDismissed", "1"); } catch {} });
   await signIn(page, email, next);
   return { ctx, page };
 }

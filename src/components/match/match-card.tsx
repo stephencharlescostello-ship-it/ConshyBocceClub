@@ -30,7 +30,7 @@ export function MatchCard({ match, highlightTeamIds = [], showDate = false, href
     </div>
   );
   return (
-    <Link href={link} className="card block p-3 transition hover:border-accent focus-visible:border-accent" aria-label={`${match.home?.name ?? "Bye"} vs ${match.away?.name ?? "Bye"}`}>
+    <Link href={link} className="card block p-3 transition hover:border-accent focus-visible:border-accent">
       <div className="mb-2 flex items-center justify-between gap-2 text-xs text-muted">
         <span className="flex items-center gap-2">
           <span className="font-semibold text-fg">{showDate ? fmtDate(match.scheduled_at) + " · " : ""}{fmtTime(match.scheduled_at)}</span>
@@ -41,6 +41,7 @@ export function MatchCard({ match, highlightTeamIds = [], showDate = false, href
       </div>
       <div className="flex flex-col gap-1.5">
         {row(match.home, match.home_games, match.home_points, "home")}
+        <span className="sr-only">vs</span>
         {row(match.away, match.away_games, match.away_points, "away")}
       </div>
       {match.status === "postponed" && match.postponed_from && <p className="mt-2 text-xs text-warning">Postponed — originally {fmtDate(match.postponed_from)}</p>}

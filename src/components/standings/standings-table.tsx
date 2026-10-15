@@ -9,7 +9,7 @@ export function StandingsTable({ rows, highlightTeamIds = [], spots = 4, showCli
   return (
     <div className="card overflow-hidden">
       <table className="w-full text-sm">
-        <thead className="bg-elev-2 text-[11px] uppercase tracking-wider text-subtle">
+        <thead className="bg-elev-2 text-[11px] uppercase tracking-wider text-muted">
           <tr>
             <th scope="col" className="px-2 py-2 text-left">#</th>
             <th scope="col" className="px-1 py-2 text-left">Team</th>
@@ -40,7 +40,7 @@ export function StandingsTable({ rows, highlightTeamIds = [], spots = 4, showCli
                   <td className={`px-1 py-2 text-right tabular ${r.pointDiff > 0 ? "text-success" : r.pointDiff < 0 ? "text-danger" : "text-muted"}`}>{signed(r.pointDiff)}</td>
                   <td className="px-1 py-2 text-right tabular text-muted">{r.streak}</td>
                   <td className="px-2 py-2 text-right">
-                    <span className="inline-flex gap-0.5" aria-label={`Last five: ${r.last5.join(" ") || "none"}`}>
+                    <span role="img" className="inline-flex gap-0.5" aria-label={`Last five: ${r.last5.join(" ") || "none"}`}>
                       {r.last5.map((x, k) => <span key={k} className={`inline-block h-2.5 w-2.5 rounded-sm ${x === "W" ? "bg-success" : "bg-danger"}`} />)}
                     </span>
                   </td>

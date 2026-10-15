@@ -19,6 +19,8 @@ export async function GET(request: NextRequest) {
     });
     return new NextResponse(`<!doctype html><title>Dev login</title><body style="font-family:system-ui;background:#0b1f17;color:#f4efe3;padding:24px"><h1>Dev login</h1><p>Local development only. Pick an account:</p><ul style="line-height:2">${rows.join("")}</ul><style>a{color:#d4a73a}</style></body>`, { headers: { "content-type": "text/html" } });
   }
+  // Brand-new address? Create the user first so a magic link can be minted for it.
+  await admin.auth.admin.createUser({ email, email_confirm: true }).catch(() => null);
   const { data, error } = await admin.auth.admin.generateLink({ type: "magiclink", email });
   if (error || !data.properties?.hashed_token) return new NextResponse(`Could not create link: ${error?.message ?? "unknown"}`, { status: 400 });
   const url = new URL("/auth/callback", request.nextUrl.origin);

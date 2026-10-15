@@ -17,13 +17,14 @@
   --accent: #d4a73a;        /* gold */
   --accent-fg: #1a1403;
   --accent-soft: rgba(212, 167, 58, 0.16);
-  --primary: #2f8f5f;       /* action green */
+  --primary: #28804f;       /* action green (4.9:1 with white text) */
   --primary-fg: #ffffff;
   --primary-soft: rgba(47, 143, 95, 0.2);
   --home: #4cc38a;          /* team A color in scoring */
   --away: #e0a060;          /* team B color in scoring */
-  --danger: #e5484d;
-  --danger-soft: rgba(229, 72, 77, 0.18);
+  --danger: #f0565b;        /* 5:1 as text on the dark surfaces */
+  --danger-fg: #1a0506;
+  --danger-soft: rgba(240, 86, 91, 0.18);
   --warning: #f5b740;
   --success: #3dd68c;
   --info: #5ea8ff;
@@ -49,6 +50,7 @@
   --home: #1f6f4a;
   --away: #b4651a;
   --danger: #c62a30;
+  --danger-fg: #ffffff;
   --danger-soft: rgba(198, 42, 48, 0.12);
   --warning: #b07a00;
   --success: #1c8a56;
@@ -74,6 +76,7 @@
   --color-home: var(--home);
   --color-away: var(--away);
   --color-danger: var(--danger);
+  --color-danger-fg: var(--danger-fg);
   --color-danger-soft: var(--danger-soft);
   --color-warning: var(--warning);
   --color-success: var(--success);
@@ -127,7 +130,7 @@ button, [role="button"], a.btn, input, select, textarea {
 .btn-accent { background: var(--accent); color: var(--accent-fg); }
 .btn-ghost { background: transparent; color: var(--fg); border-color: var(--border); }
 .btn-soft { background: var(--bg-elev-2); color: var(--fg); }
-.btn-danger { background: var(--danger); color: #fff; }
+.btn-danger { background: var(--danger); color: var(--danger-fg); }
 .btn-lg { min-height: 64px; font-size: 1.25rem; border-radius: 1.125rem; }
 
 .input {

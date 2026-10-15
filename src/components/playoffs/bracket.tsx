@@ -3,6 +3,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { getBrowserClient } from "@/lib/supabase/client";
+import { realtimeClient } from "@/lib/supabase/realtime";
 import type { BracketView, SlotView } from "@/lib/data/playoffs";
 import { fmtDateTime } from "@/lib/util/time";
 
@@ -25,11 +26,16 @@ export function Bracket({ bracket, highlightTeamIds }: { bracket: BracketView; h
   const [, setTick] = useState(0);
   useEffect(() => {
     const supabase = getBrowserClient();
-    const ch = supabase.channel(`bracket:${bracket.id}`)
-      .on("postgres_changes", { event: "*", schema: "public", table: "playoff_slots", filter: `bracket_id=eq.${bracket.id}` }, () => { setTick((t) => t + 1); router.refresh(); })
-      .on("postgres_changes", { event: "*", schema: "public", table: "matches", filter: `bracket_id=eq.${bracket.id}` }, () => { setTick((t) => t + 1); router.refresh(); })
-      .subscribe();
-    return () => { supabase.removeChannel(ch); };
+    let ch: ReturnType<typeof supabase.channel> | null = null;
+    let disposed = false;
+    realtimeClient().then((client) => {
+      if (disposed) return;
+      ch = client.channel(`bracket:${bracket.id}`)
+        .on("postgres_changes", { event: "*", schema: "public", table: "playoff_slots", filter: `bracket_id=eq.${bracket.id}` }, () => { setTick((t) => t + 1); router.refresh(); })
+        .on("postgres_changes", { event: "*", schema: "public", table: "matches", filter: `bracket_id=eq.${bracket.id}` }, () => { setTick((t) => t + 1); router.refresh(); })
+        .subscribe();
+    });
+    return () => { disposed = true; if (ch) supabase.removeChannel(ch); };
   }, [bracket.id, router]);
   return (
     <div className="no-scrollbar -mx-4 flex gap-3 overflow-x-auto px-4 pb-2">

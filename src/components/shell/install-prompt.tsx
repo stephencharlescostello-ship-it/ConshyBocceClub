@@ -1,12 +1,14 @@
 "use client";
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { Download, X } from "lucide-react";
 
 type BIP = Event & { prompt: () => Promise<void>; userChoice: Promise<{ outcome: string }> };
 
-/** Android: native install prompt. iPhone: link to the illustrated Add to Home Screen sheet. */
+/** Android: native install prompt. iPhone: link to the illustrated Add to Home Screen sheet. Shown on the home screen only so it never covers a scoring or confirm button. */
 export function InstallPrompt() {
+  const pathname = usePathname();
   const [bip, setBip] = useState<BIP | null>(null);
   const [show, setShow] = useState(false);
   const [ios, setIos] = useState(false);
@@ -31,7 +33,7 @@ export function InstallPrompt() {
       window.removeEventListener("beforeinstallprompt", handler);
     };
   }, []);
-  if (!show) return null;
+  if (!show || pathname !== "/") return null;
   const dismiss = () => {
     setShow(false);
     try {

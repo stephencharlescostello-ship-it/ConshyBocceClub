@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState, useCallback } from "react";
 import { getBrowserClient } from "@/lib/supabase/client";
+import { realtimeClient } from "@/lib/supabase/realtime";
 import type { Tables } from "@/lib/supabase/database.types";
 
 export type LiveState = { match: Tables<"matches">; games: Tables<"games">[]; frames: Tables<"frames">[]; format: unknown };
@@ -21,7 +22,11 @@ export function useMatchRealtime(matchId: string, initial: LiveState | null) {
       if (timer) clearTimeout(timer);
       timer = setTimeout(refresh, 120);
     };
-    const channel = supabase
+    let channel: ReturnType<typeof supabase.channel> | null = null;
+    let disposed = false;
+    realtimeClient().then((client) => {
+      if (disposed) return;
+      channel = client
       .channel(`match:${matchId}`)
       .on("postgres_changes", { event: "*", schema: "public", table: "matches", filter: `id=eq.${matchId}` }, bump)
       .on("postgres_changes", { event: "*", schema: "public", table: "games", filter: `match_id=eq.${matchId}` }, bump)
@@ -31,11 +36,13 @@ export function useMatchRealtime(matchId: string, initial: LiveState | null) {
         else bump();
       })
       .subscribe((status) => setConnected(status === "SUBSCRIBED"));
+    });
     const onVisible = () => document.visibilityState === "visible" && refresh();
     document.addEventListener("visibilitychange", onVisible);
     window.addEventListener("online", refresh);
     return () => {
-      supabase.removeChannel(channel);
+      disposed = true;
+      if (channel) supabase.removeChannel(channel);
       document.removeEventListener("visibilitychange", onVisible);
       window.removeEventListener("online", refresh);
       if (timer) clearTimeout(timer);

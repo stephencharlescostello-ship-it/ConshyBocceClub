@@ -8,7 +8,7 @@ export function Header({ viewer, unreadNotifications = 0 }: { viewer: Viewer | n
   return (
     <header className="sticky top-0 z-30 border-b border-border bg-bg/90 backdrop-blur">
       <div className="mx-auto flex max-w-xl items-center justify-between px-4 py-2">
-        <Link href="/" className="tap flex items-center" aria-label="CBC Shuffle home">
+        <Link href="/" className="tap flex items-center">
           <Wordmark />
         </Link>
         <div className="flex items-center gap-1">

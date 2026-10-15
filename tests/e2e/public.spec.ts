@@ -16,7 +16,7 @@ test.describe("public browsing without login", () => {
     await page.goto("/events");
     await expect(page.getByRole("heading", { name: "Events" })).toBeVisible();
     await page.goto("/rules");
-    await expect(page.getByText("Table Shuffleboard Rules")).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Table Shuffleboard Rules" })).toBeVisible();
     await page.goto("/history");
     await expect(page.getByText("Spring 2026")).toBeVisible();
   });

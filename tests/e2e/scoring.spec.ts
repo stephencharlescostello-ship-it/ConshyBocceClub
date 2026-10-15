@@ -34,7 +34,7 @@ test.describe.serial("scoring, confirmation, disputes", () => {
     expect(m.home_points).toBe(31);
     // the opposing captain got a notification and confirms
     const opp = await newSignedInPage(browser, f.captainAway, "/notifications");
-    await expect(opp.page.getByText("Confirm your match result")).toBeVisible();
+    await expect(opp.page.getByText("Confirm your match result").first()).toBeVisible();
     await opp.page.goto(`/matches/${f.matchId}/confirm`);
     await opp.page.getByRole("button", { name: "Confirm result" }).click();
     await expect(opp.page).toHaveURL(new RegExp(`/matches/${f.matchId}$`));
@@ -64,7 +64,11 @@ test.describe.serial("scoring, confirmation, disputes", () => {
     await p.getByRole("button", { name: "Submit result" }).click();
     await expect(p).toHaveURL(new RegExp(`/matches/${f.matchId}$`));
     const opp = await newSignedInPage(browser, f.captainAway, `/matches/${f.matchId}/confirm`);
-    await opp.page.getByRole("button", { name: /dispute/i }).first().click();
+    await expect(opp.page.getByRole("button", { name: "Confirm result" })).toBeVisible();
+    await expect(async () => {
+      await opp.page.getByRole("button", { name: /Something's wrong/ }).click();
+      await expect(opp.page.getByRole("button", { name: "File dispute" })).toBeVisible({ timeout: 2000 });
+    }).toPass({ timeout: 30000 });
     await opp.page.getByLabel("Note (optional)").fill("Game 2 was 15-11, not 15-0");
     await opp.page.getByRole("button", { name: "File dispute" }).click();
     await expect(opp.page.getByText(/disputed and waiting for the commissioner/i)).toBeVisible();
@@ -84,8 +88,12 @@ test.describe.serial("scoring, confirmation, disputes", () => {
   test("admin generates a season schedule (preview) and the generator is balanced", async ({ page }) => {
     await signIn(page, "commissioner@example.com", "/admin/schedule");
     await expect(page.getByRole("heading", { name: "Schedule" })).toBeVisible();
-    await page.getByRole("button", { name: "Preview" }).click();
-    await expect(page.getByText(/matches over 10 weeks/).first()).toBeVisible();
+    await expect(async () => {
+      // the seeded season already has a schedule, so preview the regenerated one
+      await page.getByLabel("Replace existing unplayed matches").check();
+      await page.getByRole("button", { name: "Preview" }).click();
+      await expect(page.getByText(/matches over 10 weeks/).first()).toBeVisible({ timeout: 8000 });
+    }).toPass({ timeout: 60000 });
     await expect(page.getByText(/double-booked 0/).first()).toBeVisible();
     await expect(page.getByText(/meetings per pair 2/).first()).toBeVisible();
   });
