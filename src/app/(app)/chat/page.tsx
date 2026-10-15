@@ -6,6 +6,7 @@ import { getViewer } from "@/lib/data/session";
 import { getActiveSeason } from "@/lib/data/league";
 import { createClient } from "@/lib/supabase/server";
 import { relative } from "@/lib/util/time";
+import { Empty } from "@/components/ui/empty";
 
 export const metadata: Metadata = { title: "Trash Talk" };
 export const dynamic = "force-dynamic";
@@ -45,7 +46,13 @@ export default async function ChatIndex() {
     <>
       <h1 className="font-display text-3xl font-extrabold">Trash Talk</h1>
       <p className="mt-1 text-sm text-muted">Keep it fun. Slurs get you muted. The League Bot posts every final.</p>
-      <ul className="mt-4 flex flex-col gap-2">{league.map((c) => <Row key={c.id} c={c} />)}{nights.map((c) => <Row key={c.id} c={c} />)}</ul>
+      {!season ? (
+        <div className="mt-4"><Empty title="No active season yet">Channels open when the commissioner starts the season.</Empty></div>
+      ) : list.length === 0 ? (
+        <div className="mt-4"><Empty title="No channels yet">The league and night channels appear once nights are set up.</Empty></div>
+      ) : (
+        <ul className="mt-4 flex flex-col gap-2">{league.map((c) => <Row key={c.id} c={c} />)}{nights.map((c) => <Row key={c.id} c={c} />)}</ul>
+      )}
       {threads.length > 0 && (
         <>
           <h2 className="mt-6 font-display text-lg font-bold">Your match threads</h2>

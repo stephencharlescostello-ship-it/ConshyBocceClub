@@ -1,0 +1,49 @@
+{
+  "name": "Fall 2026",
+  "slug": "fall-2026",
+  "source": "CBC Shuffleboard League Fall 2026 Schedule (printed sheet). Team numbers are the league's own; pairings are home-away by team number and identical on every night.",
+  "format": { "target_score": 11, "games_per_match": 3, "hanger_points": 4 },
+  "slot_times": ["18:00", "19:00", "20:00"],
+  "nights": {
+    "Monday": [
+      { "team": "Anywhere But Home", "captains": ["Terry Cummings"] },
+      { "team": "Puck It", "captains": ["Matt Ziegler"] },
+      { "team": "we suck, throwing pucks", "captains": ["Kevin Irwin"] },
+      { "team": "Team #4", "captains": ["Kathy O", "Chris Turner"] },
+      { "team": "Random Rollers", "captains": ["Haley Zygmunt"] },
+      { "team": "Participation Trophy", "captains": ["Arden Krawitz"] }
+    ],
+    "Tuesday": [
+      { "team": "Silverado", "captains": ["Chuck Swan"] },
+      { "team": "No Pucks To Give", "captains": ["Maria Buck"] },
+      { "team": "Slow The Puck Down", "captains": ["Kathy Rafter"] },
+      { "team": "Quate A Minute", "captains": ["Beth Snyder"] },
+      { "team": "Make Shuffleboard Great Again!", "captains": ["Brian Furhmeister"] },
+      { "team": "Conshy Shufflers", "captains": ["John Kijak"] }
+    ],
+    "Wednesday": [
+      { "team": "Old Pucks", "captains": ["Kevin Ashenfelter"] },
+      { "team": "Keep It On The Board", "captains": ["Tara Rosen"] },
+      { "team": "Disky Business", "captains": ["Jackie Ashenfelter"] },
+      { "team": "Lucky Pucks", "captains": ["Chris Ward"] },
+      { "team": "Slow It Down", "captains": ["Davette McGee"] },
+      { "team": "Lite Work", "captains": ["Steve Costello"] }
+    ]
+  },
+  "weeks": [
+    { "number": 1, "week_of": "2026-08-24", "slots": [[3, 5], [2, 6], [1, 4]] },
+    { "number": 2, "week_of": "2026-08-31", "slots": [[2, 4], [1, 5], [3, 6]] },
+    { "number": 0, "week_of": "2026-09-07", "kind": "bye", "label": "Bye week" },
+    { "number": 3, "week_of": "2026-09-14", "slots": [[1, 2], [3, 4], [5, 6]] },
+    { "number": 4, "week_of": "2026-09-21", "slots": [[4, 6], [1, 3], [2, 5]] },
+    { "number": 5, "week_of": "2026-09-28", "slots": [[2, 3], [4, 5], [1, 6]] },
+    { "number": 6, "week_of": "2026-10-05", "slots": [[1, 4], [2, 6], [3, 5]] },
+    { "number": 7, "week_of": "2026-10-12", "slots": [[3, 6], [1, 5], [2, 4]] },
+    { "number": 8, "week_of": "2026-10-19", "slots": [[5, 6], [3, 4], [1, 2]] },
+    { "number": 9, "week_of": "2026-10-26", "slots": [[2, 5], [4, 6], [1, 3]] },
+    { "number": 10, "week_of": "2026-11-02", "slots": [[1, 6], [2, 3], [4, 5]] },
+    { "number": 11, "week_of": "2026-11-09", "kind": "playoff", "label": "Playoffs · Mon Nov 9 & Wed Nov 11" },
+    { "number": 12, "week_of": "2026-11-16", "kind": "playoff", "label": "Playoffs Mon Nov 16 · Championship Wed Nov 18" }
+  ],
+  "playoffs": { "teams_per_night": 3, "champion_of_champions": true, "note": "Top 3 from each night; play-in 8 vs 9 on Nov 9 at 6 PM; championship Wed Nov 18 at 7 PM, best of 5; payouts to 1st–4th. Tentative." }
+}

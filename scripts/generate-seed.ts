@@ -10,10 +10,9 @@ import fs from "node:fs";
 import path from "node:path";
 import { generateRoundRobin } from "../src/lib/engine/schedule";
 import { DEFAULT_FORMAT, isGameOver, type Format } from "../src/lib/engine/format";
-import { computeStandings, type MatchResult } from "../src/lib/engine/standings";
+import { buildS26 } from "./s26-import";
+import { type MatchResult } from "../src/lib/engine/standings";
 import { finalScoreLine } from "../src/lib/engine/bot";
-import { parseCsv } from "../src/lib/import/csv";
-import { detectResultMapping, pairSubmissions, parseSubmissions, parseUsTimestamp } from "../src/lib/import/results";
 import { BADGES, BLOCKED_WORDS, EVENTS, FIRST, LAST, LEAGUE_CHAT, NICKS, NIGHT_TEAMS, TEAM_COLORS, TRASH_TALK } from "./seed-data";
 
 // ---------------------------------------------------------------- utils
@@ -87,76 +86,10 @@ const admin = newPlayer(true, true, "Dana Whitaker", "commissioner@example.com")
 admin.nick = "Commish";
 const admin2 = newPlayer(true, true, "Vince Palumbo", "vince@example.com");
 
-// ---------------------------------------------------------------- Spring 2026 (imported)
-const S26 = { id: uuid(), name: "Spring 2026", slug: "spring-2026", format: { ...DEFAULT_FORMAT, target_score: 11 } as Format };
-sql(`insert into public.seasons (id, name, slug, status, starts_on, regular_weeks, playoff_weeks, format, archived_at, notes) values
-  (${q(S26.id)}, ${q(S26.name)}, ${q(S26.slug)}, 'archived', '2026-04-27', 10, 0, ${j(S26.format)}, '2026-07-20', 'Imported from the league Google Sheet (Monday and Wednesday nights). Games were played to 11.');`);
-const s26Nights: Record<string, { id: string; weekday: number; teams: Map<string, string> }> = {
-  Monday: { id: uuid(), weekday: 1, teams: new Map() },
-  Wednesday: { id: uuid(), weekday: 3, teams: new Map() },
-};
-for (const [name, n] of Object.entries(s26Nights)) {
-  sql(`insert into public.league_nights (id, season_id, weekday, name, slug, sort_order) values (${q(n.id)}, ${q(S26.id)}, ${n.weekday}, ${q(name)}, ${q(name.toLowerCase())}, ${n.weekday});`);
-}
-const s26Weeks: string[] = [];
-for (let w = 1; w <= 10; w++) {
-  const id = uuid();
-  s26Weeks.push(id);
-  const d = new Date(Date.UTC(2026, 3, 27 + (w - 1) * 7));
-  sql(`insert into public.weeks (id, season_id, number, starts_on, kind) values (${q(id)}, ${q(S26.id)}, ${w}, '${d.toISOString().slice(0, 10)}', 'regular');`);
-}
-const csv = fs.readFileSync(path.join(__dirname, "../data/s26/scores.csv"), "utf8");
-const parsed = parseCsv(csv);
-const mapping = detectResultMapping(parsed.headers);
-const paired = pairSubmissions(parseSubmissions(parsed.rows, mapping), S26.format);
-const s26TeamRows: string[] = [];
-let colorIdx = 0;
-for (const night of Object.keys(s26Nights)) {
-  const names = new Set<string>();
-  for (const p of paired.filter((x) => x.night === night)) { names.add(p.teamA.trim()); names.add(p.teamB.trim()); }
-  for (const name of names) {
-    const id = uuid();
-    s26Nights[night].teams.set(name.toLowerCase(), id);
-    s26TeamRows.push(`(${q(id)}, ${q(S26.id)}, ${q(s26Nights[night].id)}, ${q(name)}, ${q(slug(name) + "-s26")}, ${q(TEAM_COLORS[colorIdx++ % TEAM_COLORS.length])})`);
-  }
-}
-sql(`insert into public.teams (id, season_id, night_id, name, slug, color) values\n${s26TeamRows.join(",\n")};`);
-const s26Results: Record<string, MatchResult[]> = { Monday: [], Wednesday: [] };
-let importedCount = 0;
-for (const p of paired) {
-  if (p.errors.length) continue;
-  const night = s26Nights[p.night];
-  const home = night.teams.get(p.teamA.trim().toLowerCase())!;
-  const away = night.teams.get(p.teamB.trim().toLowerCase())!;
-  const t = parseUsTimestamp(p.playedAt);
-  const weekIdx = p.week - 1;
-  const base = new Date(Date.UTC(2026, 3, 27 + weekIdx * 7 + (night.weekday - 1)));
-  const slotIdx = t ? Math.max(0, Math.min(2, t.hh - 18 - (t.mm < 30 && t.hh > 18 ? 1 : 0))) : 0;
-  const when = `'${base.toISOString().slice(0, 10)} ${18 + slotIdx}:00:00 America/New_York'::timestamptz`;
-  const id = uuid();
-  importedCount++;
-  if (p.forfeitTeam) {
-    const ff = night.teams.get(p.forfeitTeam.trim().toLowerCase())!;
-    const winner = ff === home ? away : home;
-    sql(`insert into public.matches (id, season_id, night_id, week_id, home_team_id, away_team_id, table_id, slot_index, scheduled_at, status, entry_mode, winner_team_id, forfeit_team_id, home_games, away_games, home_points, away_points, confirmed_at, notes)
-  values (${q(id)}, ${q(S26.id)}, ${q(night.id)}, ${q(s26Weeks[weekIdx])}, ${q(home)}, ${q(away)}, ${q(TABLES[0].id)}, ${slotIdx}, ${when}, 'forfeit', 'import', ${q(winner)}, ${q(ff)}, ${winner === home ? 2 : 0}, ${winner === away ? 2 : 0}, ${winner === home ? 22 : 0}, ${winner === away ? 22 : 0}, ${when} + interval '3 hours', 'Forfeit recorded in the spreadsheet (FF column).');`);
-    s26Results[p.night].push({ id, homeTeamId: home, awayTeamId: away, winnerTeamId: winner, homeGames: winner === home ? 2 : 0, awayGames: winner === away ? 2 : 0, homePoints: winner === home ? 22 : 0, awayPoints: winner === away ? 22 : 0, status: "forfeit", scheduledAt: base.toISOString(), forfeitTeamId: ff });
-    continue;
-  }
-  let hg = 0, ag = 0, hp = 0, ap = 0;
-  for (const g of p.games) { if (g.home > g.away) hg++; else ag++; hp += g.home; ap += g.away; }
-  const winner = hg > ag ? home : away;
-  sql(`insert into public.matches (id, season_id, night_id, week_id, home_team_id, away_team_id, table_id, slot_index, scheduled_at, status, entry_mode, winner_team_id, home_games, away_games, home_points, away_points, submitted_at, confirmed_at)
-  values (${q(id)}, ${q(S26.id)}, ${q(night.id)}, ${q(s26Weeks[weekIdx])}, ${q(home)}, ${q(away)}, ${q(TABLES[0].id)}, ${slotIdx}, ${when}, 'confirmed', 'import', ${q(winner)}, ${hg}, ${ag}, ${hp}, ${ap}, ${when} + interval '70 minutes', ${when} + interval '75 minutes');`);
-  sql(`insert into public.games (match_id, number, home_score, away_score, status, winner_team_id) values ${p.games.map((g, i) => `(${q(id)}, ${i + 1}, ${g.home}, ${g.away}, 'final', ${q(g.home > g.away ? home : away)})`).join(", ")};`);
-  s26Results[p.night].push({ id, homeTeamId: home, awayTeamId: away, winnerTeamId: winner, homeGames: hg, awayGames: ag, homePoints: hp, awayPoints: ap, status: "confirmed", scheduledAt: base.toISOString() });
-}
-// S26 champions (regular season winners; no playoff data in the sheet)
-for (const night of Object.keys(s26Nights)) {
-  const teams = Array.from(s26Nights[night].teams.entries()).map(([k, id]) => ({ id, name: k }));
-  const rows = computeStandings(teams, s26Results[night]);
-  sql(`insert into public.awards (season_id, kind, team_id, details) values (${q(S26.id)}, 'night_champion', ${q(rows[0].teamId)}, ${j({ night, record: `${rows[0].wins}-${rows[0].losses}`, note: "Regular-season champion (no playoff results in the spreadsheet)" })});`);
-}
+// ---------------------------------------------------------------- Spring 2026 (imported, shared with scripts/load-production.ts)
+const s26 = buildS26({ uuid, tableId: TABLES[0].id, status: "archived" });
+for (const stmt of s26.sql) sql(stmt);
+const importedCount = s26.importedCount;
 
 // ---------------------------------------------------------------- Fall 2026 (active, half played)
 const FALL = { id: uuid(), name: "Fall 2026", slug: "fall-2026", format: DEFAULT_FORMAT };
