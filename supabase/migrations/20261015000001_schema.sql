@@ -502,7 +502,7 @@ create table public.dues (
 
 create table public.audit_log (
   id bigint generated always as identity primary key,
-  actor_id uuid,
+  actor_id uuid references public.players(id) on delete set null,
   actor_user_id uuid,
   action text not null,
   entity text not null,

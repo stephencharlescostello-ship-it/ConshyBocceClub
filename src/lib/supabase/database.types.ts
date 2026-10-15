@@ -49,7 +49,19 @@ isOneToOne: false
                     "action"?: string,"actor_id"?: string | null,"actor_user_id"?: string | null,"after"?: Json | null,"before"?: Json | null,"created_at"?: string,"entity"?: string,"entity_id"?: string | null,"id"?: never,"note"?: string | null
                   }
                   Relationships: [
-                    
+                    {
+      foreignKeyName: "audit_log_actor_id_fkey"
+      columns: ["actor_id"]
+isOneToOne: false
+      referencedRelation: "player_profiles"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "audit_log_actor_id_fkey"
+      columns: ["actor_id"]
+isOneToOne: false
+      referencedRelation: "players"
+      referencedColumns: ["id"]
+    }
                   ]
                 },"awards": {
                   Row: {

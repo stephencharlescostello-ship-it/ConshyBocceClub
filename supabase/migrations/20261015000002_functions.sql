@@ -296,26 +296,26 @@ end $$;
 -- Undo the most recent frame of the match (reopens the previous game when the current one is empty).
 create or replace function public.undo_frame(p_match uuid) returns jsonb
 language plpgsql security definer set search_path = public as $$
-declare m public.matches; g public.games; f public.frames; fmt jsonb;
+declare m public.matches; gm public.games; fr public.frames; fmt jsonb;
 begin
   if not public.can_score_match(p_match) then raise exception 'Not allowed' using errcode = '42501'; end if;
   select * into m from public.matches where id = p_match for update;
   if m.status <> 'live' then raise exception 'Only a live match can be undone' using errcode = '22023'; end if;
   fmt := (select format from public.seasons where id = m.season_id);
   -- latest frame across games
-  select f.* into f from public.frames f join public.games g on g.id = f.game_id where g.match_id = p_match order by g.number desc, f.number desc limit 1;
-  if f.id is null then return public.match_state(p_match); end if;
-  select * into g from public.games where id = f.game_id for update;
+  select f.* into fr from public.frames f join public.games g on g.id = f.game_id where g.match_id = p_match order by g.number desc, f.number desc limit 1;
+  if fr.id is null then return public.match_state(p_match); end if;
+  select * into gm from public.games where id = fr.game_id for update;
   -- drop any later empty game
-  delete from public.games where match_id = p_match and number > g.number and frame_count = 0;
-  delete from public.frames where id = f.id;
+  delete from public.games where match_id = p_match and number > gm.number and frame_count = 0;
+  delete from public.frames where id = fr.id;
   update public.games set
-    home_score = home_score - case when f.scoring_team_id = m.home_team_id then f.points else 0 end,
-    away_score = away_score - case when f.scoring_team_id = m.away_team_id then f.points else 0 end,
+    home_score = home_score - case when fr.scoring_team_id = m.home_team_id then fr.points else 0 end,
+    away_score = away_score - case when fr.scoring_team_id = m.away_team_id then fr.points else 0 end,
     frame_count = frame_count - 1, status = 'live', ended_at = null, winner_team_id = null
-  where id = g.id;
+  where id = gm.id;
   update public.matches set
-    current_game = g.number,
+    current_game = gm.number,
     home_games = (select count(*) from public.games where match_id = p_match and status = 'final' and winner_team_id = m.home_team_id),
     away_games = (select count(*) from public.games where match_id = p_match and status = 'final' and winner_team_id = m.away_team_id),
     home_points = (select coalesce(sum(home_score),0) from public.games where match_id = p_match),
@@ -661,13 +661,22 @@ begin
   on conflict (channel_id, player_id) do update set last_read_at = now();
 end $$;
 
--- Unread counts for the current player, per channel
+-- Unread counts for the current player, per channel. Only channels the player can reasonably follow
+-- (league, their nights, their teams' match threads) and only messages since they joined / last read.
 create or replace function public.unread_counts() returns table (channel_id uuid, unread bigint)
 language sql stable security definer set search_path = public as $$
+  with me as (select id, created_at from public.players where user_id = auth.uid() and deleted_at is null),
+  mine as (
+    select c.id from public.channels c, me
+    where c.kind = 'league'
+       or (c.kind = 'night' and c.night_id in (select t.night_id from public.team_memberships tm join public.teams t on t.id = tm.team_id where tm.player_id = me.id))
+       or (c.kind = 'match' and c.match_id in (select m.id from public.matches m join public.team_memberships tm on tm.team_id in (m.home_team_id, m.away_team_id) where tm.player_id = me.id))
+  )
   select c.id, count(m.id)
-  from public.channels c
-  left join public.channel_reads r on r.channel_id = c.id and r.player_id = public.current_player_id()
-  left join public.messages m on m.channel_id = c.id and m.deleted_at is null and m.created_at > coalesce(r.last_read_at, 'epoch'::timestamptz) and (m.author_id is distinct from public.current_player_id())
+  from mine c
+  cross join me
+  left join public.channel_reads r on r.channel_id = c.id and r.player_id = me.id
+  left join public.messages m on m.channel_id = c.id and m.deleted_at is null and m.created_at > greatest(coalesce(r.last_read_at, 'epoch'::timestamptz), me.created_at - interval '2 days') and m.author_id is distinct from me.id
   group by c.id
 $$;
 
