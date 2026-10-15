@@ -11,12 +11,16 @@ You need accounts at **Supabase** (free tier is fine) and **Vercel** (free tier 
    - **service_role** key → `SUPABASE_SERVICE_ROLE_KEY` (server only, never commit it)
 3. **Project Settings → Database → Connection string → URI** → `DATABASE_URL` (replace `[YOUR-PASSWORD]`).
 4. **Authentication → Providers → Email**: leave *Enable Email provider* on, turn **Confirm email** off (magic links already prove ownership).
-5. **Authentication → Email Templates → Magic Link**: replace the body with the text below so the email carries both a link and a 6-digit code (iPhone users who open the link outside the installed app can type the code instead):
+5. **Custom SMTP, then the Magic Link template.** Supabase's built-in mailer sends only ~2 emails an hour and, on the free tier, the dashboard and API refuse to change email templates while it is in use. So first point Auth at your own SMTP provider:
+   - Create a free account at https://resend.com (3,000 emails/month). Under **Domains** add and verify the domain you will send from (`onboarding@resend.dev` works without a domain but only delivers to your own Resend account email). Under **API Keys** create a key with *Sending access*. No domain? Brevo's free plan (300 emails/day) verifies a plain email address as the sender instead; the same `SMTP_*` lines work with host `smtp-relay.brevo.com`, port `587`, your Brevo login as the user and its SMTP key as the password.
+   - Either fill it in at **Project Settings → Auth → SMTP Settings** (host `smtp.resend.com`, port `465`, username `resend`, password = the API key, sender email/name) and raise **Authentication → Rate Limits → Emails sent** to 100/hour, or put the key in `.env.production.local` as `SMTP_PASS` (with `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_SENDER_EMAIL`, `SMTP_SENDER_NAME`) and run `npm run auth:email`, which sets SMTP, the template below and the 100/hour limit in one go. Never commit the key.
+   - **Authentication → Email Templates → Magic Link**: subject `Sign in to CBC Shuffle`, body as below so the email carries both a link and a 6-digit code (iPhone users who open the link outside the installed app can type the code instead):
    ```html
    <h2>Sign in to CBC Shuffle</h2>
    <p><a href="{{ .ConfirmationURL }}">Tap here to sign in</a></p>
    <p>Or enter this code in the app: <strong>{{ .Token }}</strong></p>
    ```
+   Test with `npm run auth:email -- --send-test you@example.com`: the email should come from your sender and typing the code on `/sign-in` must sign you in.
 6. **Authentication → URL Configuration**: Site URL = your Vercel URL (you'll get it in step 3; come back and set it), Redirect URLs: add `https://<your-domain>/**`.
 
 ## 2. Push the database (2 min)
