@@ -53,7 +53,7 @@ Seed data is optional in production. To load the demo season (teams, players, re
    | `DATABASE_URL` | not needed on Vercel |
 
 3. **Deploy**. Copy the URL, then go back to Supabase → Authentication → URL Configuration and set Site URL + Redirect URL to it.
-4. Vercel → Project → **Settings → Cron Jobs** should show the two jobs from `vercel.json` (`/api/cron/auto-confirm` hourly, `/api/cron/reminders` daily). They authenticate with `CRON_SECRET` automatically.
+4. Vercel → Project → **Settings → Cron Jobs** should show the two jobs from `vercel.json` (`/api/cron/auto-confirm` daily at 14:00 UTC, `/api/cron/reminders` daily at 13:00 UTC; Vercel Hobby allows only daily crons, so results past their 12 h window are confirmed on the next run rather than within the hour). They authenticate with `CRON_SECRET` automatically.
 
 ## 4. Make yourself the first admin (1 min)
 
