@@ -2,8 +2,17 @@ import { test, expect } from "@playwright/test";
 import { sql, signIn } from "./helpers";
 
 test.describe("sign in and join a team", () => {
+  test("quick sign-in with email and name lands on onboarding with that name", async ({ page }) => {
+    await page.goto("/sign-in");
+    await page.getByLabel("Email").fill(`e2e-quick-${Date.now()}@example.com`);
+    await page.getByLabel("First name").fill("Quick");
+    await page.getByLabel("Last name").fill("Tester");
+    await page.getByRole("button", { name: /^sign in$/i }).click();
+    await expect(page.getByRole("heading", { name: /welcome, quick/i })).toBeVisible();
+  });
   test("magic-link email flow shows the code step and dev login lands on onboarding", async ({ page }) => {
     await page.goto("/sign-in");
+    await page.getByRole("button", { name: /email me a link or code instead/i }).click();
     await page.getByLabel("Email").fill(`e2e-${Date.now()}@example.com`);
     await page.getByRole("button", { name: /email me a sign-in link/i }).click();
     await expect(page.getByText("Check your email")).toBeVisible();

@@ -33,7 +33,7 @@ async function quickstart() {
   page.drawText("Conshohocken Bocce Club shuffleboard league", { x: 48, y: 708, size: 12, font: reg, color: muted });
   const steps: [string, string][] = [
     ["Install the app", `Open ${SITE.replace(/^https?:\/\//, "")} on your phone (or scan a table poster). iPhone: Share > Add to Home Screen. Android: tap Install.`],
-    ["Sign in", "Enter your email. Tap the link we send, or type the 6-digit code from the email. You stay signed in all season."],
+    ["Sign in", "Enter the email you registered with and your name. No password, no code. You stay signed in all season."],
     ["Join your team", "Enter the 6-letter join code from your captain, or claim your name from the roster."],
     ["Match night", "Scan the QR poster on your table. Tonight's match opens. Captains (or a designated scorekeeper) tap Keep Score."],
     ["Keep score", "Each frame: tap the points for the side that scored (+1, +2, +3, Hanger = 4) then Next frame. Undo fixes mistakes. Games end at 15; first to 2 games wins. Everyone watching sees it live."],

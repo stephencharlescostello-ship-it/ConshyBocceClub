@@ -2,13 +2,16 @@
 import { useActionState, useState } from "react";
 import Link from "next/link";
 import { Mail, Smartphone, KeyRound } from "lucide-react";
-import { sendMagicLink, sendSmsCode, verifyEmailCode, verifySmsCode, type AuthState } from "@/lib/actions/auth";
+import { quickSignIn, sendMagicLink, sendSmsCode, verifyEmailCode, verifySmsCode, type AuthState } from "@/lib/actions/auth";
 
 const init: AuthState = { ok: false };
 
 export function SignInForm({ next, smsEnabled, devLogin }: { next: string; smsEnabled: boolean; devLogin: boolean }) {
-  const [mode, setMode] = useState<"email" | "phone">("email");
-  const [sent, sendAction, sending] = useActionState(sendMagicLink, init);
+  const [mode, setMode] = useState<"email" | "link" | "phone">("email");
+  const [quick, quickAction, quickPending] = useActionState(quickSignIn, init);
+  const [linkSent, sendAction, sending] = useActionState(sendMagicLink, init);
+  // Admin accounts are asked for the emailed code even on the quick form.
+  const sent: AuthState = quick.requireCode ? quick : linkSent;
   const [verified, verifyAction, verifying] = useActionState(verifyEmailCode, init);
   const [smsSent, smsAction, smsSending] = useActionState(sendSmsCode, init);
   const [smsVerified, smsVerifyAction, smsVerifying] = useActionState(verifySmsCode, init);
@@ -39,19 +42,39 @@ export function SignInForm({ next, smsEnabled, devLogin }: { next: string; smsEn
 
   return (
     <div className="mt-6 flex flex-col gap-4">
-      {!sent.ok ? (
+      {!sent.ok && mode === "email" ? (
+        <form action={quickAction} className="flex flex-col gap-3">
+          <input type="hidden" name="next" value={next} />
+          <label className="text-sm font-semibold" htmlFor="email">Email</label>
+          <input id="email" name="email" type="email" inputMode="email" autoComplete="email" autoCapitalize="none" className="input" placeholder="you@example.com" defaultValue={quick.email} required />
+          <div className="grid grid-cols-2 gap-3">
+            <div className="flex flex-col gap-3">
+              <label className="text-sm font-semibold" htmlFor="first_name">First name</label>
+              <input id="first_name" name="first_name" autoComplete="given-name" className="input" placeholder="Pat" maxLength={40} required />
+            </div>
+            <div className="flex flex-col gap-3">
+              <label className="text-sm font-semibold" htmlFor="last_name">Last name</label>
+              <input id="last_name" name="last_name" autoComplete="family-name" className="input" placeholder="Rizzo" maxLength={40} required />
+            </div>
+          </div>
+          {quick.message && !quick.requireCode && <p role="alert" className="text-sm font-semibold text-danger">{quick.message}</p>}
+          <button className="btn btn-primary btn-lg" disabled={quickPending}><Mail className="h-5 w-5" /> {quickPending ? "Signing in…" : "Sign in"}</button>
+          <button type="button" className="btn btn-ghost" onClick={() => setMode("link")}><KeyRound className="h-5 w-5" /> Email me a link or code instead</button>
+        </form>
+      ) : !sent.ok ? (
         <form action={sendAction} className="flex flex-col gap-3">
           <input type="hidden" name="next" value={next} />
           <label className="text-sm font-semibold" htmlFor="email">Email</label>
           <input id="email" name="email" type="email" inputMode="email" autoComplete="email" autoCapitalize="none" className="input" placeholder="you@example.com" required />
           {sent.message && <p role="alert" className="text-sm font-semibold text-danger">{sent.message}</p>}
           <button className="btn btn-primary btn-lg" disabled={sending}><Mail className="h-5 w-5" /> {sending ? "Sending…" : "Email me a sign-in link"}</button>
+          <button type="button" className="btn btn-ghost" onClick={() => setMode("email")}>Back to quick sign-in</button>
         </form>
       ) : (
         <div className="card flex flex-col gap-4 p-4">
           <div>
             <p className="font-semibold">Check your email</p>
-            <p className="mt-1 text-sm text-muted">We sent a link and a code to <span className="font-semibold text-fg">{sent.email}</span>. Tap the link, or type the code here.</p>
+            <p className="mt-1 text-sm text-muted">{quick.requireCode ? "Admin accounts sign in with a code. " : ""}We sent a link and a code to <span className="font-semibold text-fg">{sent.email}</span>. Tap the link, or type the code here.</p>
           </div>
           <form action={verifyAction} className="flex flex-col gap-3">
             <input type="hidden" name="email" value={sent.email} />

@@ -6,7 +6,7 @@ export const metadata: Metadata = { title: "Player quickstart" };
 
 const STEPS = [
   { t: "Install the app", d: "Open the link or scan the table QR, then Add to Home Screen (iPhone: Share → Add to Home Screen; Android: Install)." },
-  { t: "Sign in", d: "Enter your email. Tap the link we send or type the 6-digit code. You stay signed in all season." },
+  { t: "Sign in", d: "Enter the email you registered with and your name. No password, no code. You stay signed in all season." },
   { t: "Join your team", d: "Type the 6-letter join code from your captain, or claim your name from the roster." },
   { t: "Match night: scan the table", d: "The QR poster on your table opens tonight's match. Captains (or a designated scorekeeper) tap Keep Score." },
   { t: "Keep score", d: "Each frame, tap the points for the side that scored (+1, +2, +3, Hanger) then Next frame. Undo fixes mistakes. The app ends games and the match automatically and everyone watching sees it live." },
