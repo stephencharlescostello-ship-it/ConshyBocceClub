@@ -7,7 +7,7 @@ import { signed } from "@/lib/util/strings";
 export function StandingsTable({ rows, highlightTeamIds = [], spots = 4, showClinch = false }: { rows: StandingRow[]; highlightTeamIds?: string[]; spots?: number; showClinch?: boolean }) {
   const [open, setOpen] = useState<string | null>(null);
   return (
-    <div className="card overflow-hidden">
+    <div className="card overflow-x-auto">
       <table className="w-full text-sm">
         <thead className="bg-elev-2 text-[11px] uppercase tracking-wider text-muted">
           <tr>
@@ -34,7 +34,7 @@ export function StandingsTable({ rows, highlightTeamIds = [], spots = 4, showCli
                       {showClinch && r.eliminated && <span className="text-danger" title="Eliminated">✕</span>}
                     </button>
                   </td>
-                  <td className="max-w-[9rem] px-1 py-2"><Link href={`/teams/${r.teamId}`} className={`block truncate ${mine ? "font-extrabold text-accent" : "font-semibold"}`}>{r.name}</Link></td>
+                  <td className="max-w-[7.5rem] px-1 py-2 sm:max-w-[9rem]"><Link href={`/teams/${r.teamId}`} className={`block truncate ${mine ? "font-extrabold text-accent" : "font-semibold"}`}>{r.name}</Link></td>
                   <td className="whitespace-nowrap px-1 py-2 text-right font-bold tabular">{r.wins}–{r.losses}</td>
                   <td className="whitespace-nowrap px-1 py-2 text-right tabular text-muted">{r.gamesWon}–{r.gamesLost}</td>
                   <td className={`whitespace-nowrap px-1 py-2 text-right tabular ${r.pointDiff > 0 ? "text-success" : r.pointDiff < 0 ? "text-danger" : "text-muted"}`}>{signed(r.pointDiff)}</td>
