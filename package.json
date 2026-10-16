@@ -24,7 +24,8 @@
     "seed:generate": "tsx scripts/generate-seed.ts",
     "zip": "node scripts/zip.mjs",
     "auth:email": "node scripts/configure-auth-email.mjs",
-    "load:prod": "tsx scripts/load-production.ts"
+    "load:prod": "tsx scripts/load-production.ts",
+    "import:f26": "tsx scripts/import-f26.ts"
   },
   "dependencies": {
     "@capacitor/cli": "^8.5.3",

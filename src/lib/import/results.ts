@@ -16,8 +16,9 @@ export type ResultMapping = {
   g2: string | null; g2o: string | null;
   g3: string | null; g3o: string | null;
   timestamp: string | null;
-  // Google Forms put the Wednesday questions in separate columns; these are merged with the primary ones.
+  // Google Forms puts each night's questions in separate columns; these are merged with the primary ones.
   altWeek: string | null; altTeam: string | null; altOpponent: string | null;
+  altWeek2: string | null; altTeam2: string | null; altOpponent2: string | null;
 };
 
 // PapaParse renames duplicate headers to "Name_1", "Name_2" — strip that suffix for matching.
@@ -35,10 +36,13 @@ export function detectResultMapping(headers: string[]): ResultMapping {
     night: find((h) => h.includes("night") || h === "weekday" || h === "day"),
     week: find((h) => h.includes("week"), 0),
     altWeek: find((h) => h.includes("week"), 1),
+    altWeek2: find((h) => h.includes("week"), 2),
     team: find((h) => h === "your team" || h === "team" || h === "home" || h === "home team", 0),
     altTeam: find((h) => h === "your team", 1),
+    altTeam2: find((h) => h === "your team", 2),
     opponent: find((h) => h.includes("oppos") || h === "away" || h === "away team", 0),
     altOpponent: find((h) => h.includes("oppos"), 1),
+    altOpponent2: find((h) => h.includes("oppos"), 2),
     g1: find((h) => h.startsWith("game 1") && (h.includes("your") || h.includes("home"))) ?? find((h) => h === "g1" || h === "game 1 home"),
     g1o: find((h) => h.startsWith("game 1") && (h.includes("oppo") || h.includes("away"))) ?? find((h) => h === "g1 opp" || h === "game 1 away"),
     g2: find((h) => h.startsWith("game 2") && (h.includes("your") || h.includes("home"))) ?? find((h) => h === "g2" || h === "game 2 home"),
@@ -85,9 +89,9 @@ export function parseSubmissions(rows: RawRow[], map: ResultMapping): ParsedSubm
     const isEmpty = Object.values(r).every((v) => !String(v ?? "").trim());
     if (isEmpty) return;
     const night = normalizeNight(get(r, map.night));
-    const week = parseWeek(get(r, map.week)) ?? parseWeek(get(r, map.altWeek));
-    const team = get(r, map.team) || get(r, map.altTeam);
-    const opponent = get(r, map.opponent) || get(r, map.altOpponent);
+    const week = parseWeek(get(r, map.week)) ?? parseWeek(get(r, map.altWeek)) ?? parseWeek(get(r, map.altWeek2));
+    const team = get(r, map.team) || get(r, map.altTeam) || get(r, map.altTeam2);
+    const opponent = get(r, map.opponent) || get(r, map.altOpponent) || get(r, map.altOpponent2);
     if (!night) errors.push("Missing or unrecognised league night");
     if (!week) errors.push("Missing week number");
     if (!team) errors.push("Missing team");
@@ -145,7 +149,23 @@ export function pairSubmissions(subs: ParsedSubmission[], format: Format): Paire
       used.add(b.rowIndex);
       const mirrored = b.games.map((g) => ({ home: g.theirs, away: g.mine }));
       const same = mirrored.length === games.length && mirrored.every((g, i) => g.home === games[i].home && g.away === games[i].away);
-      if (!same) errors.push(`Rows ${a.rowIndex} and ${b.rowIndex} disagree: ${fmtGames(games)} vs ${fmtGames(mirrored)}`);
+      if (!same) {
+        // The two captains typed different scores. Keep the only legal version if just one is a
+        // complete, legal match; if both are legal and agree on the winner keep the first reporter's.
+        // Either way it is a warning for the commissioner. Two legal versions with different winners,
+        // or two illegal ones, block the import.
+        const aValid = !validateMatchGames(games, format);
+        const bValid = !validateMatchGames(mirrored, format);
+        const agree = matchWinner(games) === matchWinner(mirrored);
+        if ((aValid && bValid && agree) || (aValid !== bValid)) {
+          const useB = !aValid && bValid;
+          const chosen = useB ? mirrored : games.slice();
+          warnings.push(`Rows ${a.rowIndex} and ${b.rowIndex} disagree on scores (${fmtGames(games)} vs ${fmtGames(mirrored)}); used row ${useB ? b.rowIndex : a.rowIndex}`);
+          games.splice(0, games.length, ...chosen);
+        } else {
+          errors.push(`Rows ${a.rowIndex} and ${b.rowIndex} disagree: ${fmtGames(games)} vs ${fmtGames(mirrored)}`);
+        }
+      }
     } else {
       warnings.push(`Only one team reported this match (row ${a.rowIndex})`);
     }
@@ -167,6 +187,12 @@ export function pairSubmissions(subs: ParsedSubmission[], format: Format): Paire
     out.push({ night: s.night, week: s.week, teamA: s.team, teamB: s.opponent, games: [], sources: [s.rowIndex], warnings: [], errors: s.errors, forfeitTeam: null, playedAt: s.timestamp });
   }
   return out.sort((x, y) => x.week - y.week || x.night.localeCompare(y.night));
+}
+
+function matchWinner(g: { home: number; away: number }[]) {
+  let h = 0, a = 0;
+  for (const x of g) if (x.home > x.away) h++; else a++;
+  return h > a ? "home" : "away";
 }
 
 function fmtGames(g: { home: number; away: number }[]) {

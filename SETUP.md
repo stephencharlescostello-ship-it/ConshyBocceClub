@@ -74,7 +74,7 @@ Visit **`/health`**. Every row should be green: database (RLS on), auth, realtim
 
 ## 6. First season (3 min)
 
-For the CBC league itself, `npm run load:prod` (reads `SUPABASE_DB_PASSWORD` from `.env.production.local`) loads the Spring 2026 history and the Fall 2026 nights, teams, captains and schedule from `data/`; `--dry-run` rehearses and rolls back. Otherwise: Admin → **Seasons & format** → *Create season* (format defaults: to 15, best of 3, hanger 4). Then **Nights, teams & rosters** (or **Import CSV** with `docs/templates/*.csv` — dry run first), then **Schedule → Generate**. Print **QR posters** and tape them to the tables. Pin a welcome announcement. Done.
+For the CBC league itself, `npm run load:prod` (reads `SUPABASE_DB_PASSWORD` from `.env.production.local`) loads the Spring 2026 history and the Fall 2026 nights, teams, captains and schedule from `data/`; `--dry-run` rehearses and rolls back. `npm run import:f26` then pulls this fall's scores and rosters from the league's Google Sheet (re-runnable: confirmed matches are skipped, players are matched by email, then name). Otherwise: Admin → **Seasons & format** → *Create season* (format defaults: to 15, best of 3, hanger 4). Then **Nights, teams & rosters** (or **Import CSV** with `docs/templates/*.csv` — dry run first), then **Schedule → Generate**. Print **QR posters** and tape them to the tables. Pin a welcome announcement. Done.
 
 ## Local development
 

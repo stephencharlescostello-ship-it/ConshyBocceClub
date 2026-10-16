@@ -39,10 +39,27 @@ describe("spreadsheet import", () => {
     const paired = pairSubmissions(subs, DEFAULT_FORMAT);
     const ab = paired.find((p) => p.teamA === "A")!;
     const cd = paired.find((p) => p.teamA === "C")!;
-    expect(ab.errors[0]).toMatch(/disagree/);
+    // Both versions are legal matches with the same winner: imported with a warning, first reporter's scores kept.
+    expect(ab.errors).toHaveLength(0);
+    expect(ab.warnings[0]).toMatch(/disagree on scores/);
+    expect(ab.games).toEqual([{ home: 15, away: 3 }, { home: 15, away: 9 }]);
     expect(cd.errors[0]).toMatch(/exactly 15/);
     expect(cd.warnings[0]).toMatch(/Only one team/);
     expect(paired.find((p) => p.teamB === "D" && p.teamA === "")!.errors.length).toBeGreaterThan(2);
+  });
+  it("keeps the only legal version of a conflicting pair, and blocks a disputed winner", () => {
+    const mk = (team: string, opp: string, g: [number, number][]) => Object.fromEntries([["Night", "Monday"], ["Week", "Week 2"], ["Your Team", team], ["Opposing Team", opp], ...g.flatMap(([m, t], i) => [[`Game ${i + 1} [Your Score]`, String(m)], [`Game ${i + 1} [Opponent's Score]`, String(t)]])]) as Record<string, string>;
+    const rows = [
+      mk("A", "B", [[15, 1], [15, 9]]), mk("B", "A", [[1, 15], [15, 9]]), // B's version stops at 1-1: illegal, so A's stands
+      mk("C", "D", [[15, 8], [0, 15], [15, 7]]), mk("D", "C", [[8, 15], [15, 0], [15, 7]]), // both legal, different winners
+    ];
+    const map = detectResultMapping(Object.keys(rows[2])); // the three-game row has every column
+    const paired = pairSubmissions(parseSubmissions(rows, map), DEFAULT_FORMAT);
+    const ab = paired.find((p) => p.teamA === "A")!;
+    expect(ab.errors).toHaveLength(0);
+    expect(ab.warnings[0]).toMatch(/used row 1/);
+    const cd = paired.find((p) => p.teamA === "C")!;
+    expect(cd.errors[0]).toMatch(/disagree/);
   });
   it("parses US timestamps", () => {
     expect(parseUsTimestamp("4/27/2026 18:50:15")).toEqual({ y: 2026, m: 4, d: 27, hh: 18, mm: 50 });

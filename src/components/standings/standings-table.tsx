@@ -13,11 +13,11 @@ export function StandingsTable({ rows, highlightTeamIds = [], spots = 4, showCli
           <tr>
             <th scope="col" className="px-2 py-2 text-left">#</th>
             <th scope="col" className="px-1 py-2 text-left">Team</th>
-            <th scope="col" className="px-1 py-2 text-right">W–L</th>
-            <th scope="col" className="px-1 py-2 text-right">Games</th>
-            <th scope="col" className="px-1 py-2 text-right">+/−</th>
-            <th scope="col" className="px-1 py-2 text-right">Strk</th>
-            <th scope="col" className="px-2 py-2 text-right">Last 5</th>
+            <th scope="col" className="whitespace-nowrap px-1 py-2 text-right">W–L</th>
+            <th scope="col" className="whitespace-nowrap px-1 py-2 text-right">Games</th>
+            <th scope="col" className="whitespace-nowrap px-1 py-2 text-right">+/−</th>
+            <th scope="col" className="whitespace-nowrap px-1 py-2 text-right">Strk</th>
+            <th scope="col" className="whitespace-nowrap px-2 py-2 text-right">Last 5</th>
           </tr>
         </thead>
         <tbody>
@@ -35,11 +35,11 @@ export function StandingsTable({ rows, highlightTeamIds = [], spots = 4, showCli
                     </button>
                   </td>
                   <td className="max-w-[9rem] px-1 py-2"><Link href={`/teams/${r.teamId}`} className={`block truncate ${mine ? "font-extrabold text-accent" : "font-semibold"}`}>{r.name}</Link></td>
-                  <td className="px-1 py-2 text-right font-bold tabular">{r.wins}–{r.losses}</td>
-                  <td className="px-1 py-2 text-right tabular text-muted">{r.gamesWon}–{r.gamesLost}</td>
-                  <td className={`px-1 py-2 text-right tabular ${r.pointDiff > 0 ? "text-success" : r.pointDiff < 0 ? "text-danger" : "text-muted"}`}>{signed(r.pointDiff)}</td>
-                  <td className="px-1 py-2 text-right tabular text-muted">{r.streak}</td>
-                  <td className="px-2 py-2 text-right">
+                  <td className="whitespace-nowrap px-1 py-2 text-right font-bold tabular">{r.wins}–{r.losses}</td>
+                  <td className="whitespace-nowrap px-1 py-2 text-right tabular text-muted">{r.gamesWon}–{r.gamesLost}</td>
+                  <td className={`whitespace-nowrap px-1 py-2 text-right tabular ${r.pointDiff > 0 ? "text-success" : r.pointDiff < 0 ? "text-danger" : "text-muted"}`}>{signed(r.pointDiff)}</td>
+                  <td className="whitespace-nowrap px-1 py-2 text-right tabular text-muted">{r.streak}</td>
+                  <td className="whitespace-nowrap px-2 py-2 text-right">
                     <span role="img" className="inline-flex gap-0.5" aria-label={`Last five: ${r.last5.join(" ") || "none"}`}>
                       {r.last5.map((x, k) => <span key={k} className={`inline-block h-2.5 w-2.5 rounded-sm ${x === "W" ? "bg-success" : "bg-danger"}`} />)}
                     </span>

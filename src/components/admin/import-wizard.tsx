@@ -16,7 +16,7 @@ export function ImportWizard({ seasons, defaultSeasonId, templates }: { seasons:
   const [mapping, setMapping] = useState<Record<string, string | null>>({});
   const [report, setReport] = useState<ImportReport | null>(null);
   const [pending, start] = useTransition();
-  const targets = kind === "results" ? ["night", "week", "team", "opponent", "g1", "g1o", "g2", "g2o", "g3", "g3o", "timestamp", "altWeek", "altTeam", "altOpponent"] : templates[kind].map((t) => t.col);
+  const targets = kind === "results" ? ["night", "week", "team", "opponent", "g1", "g1o", "g2", "g2o", "g3", "g3o", "timestamp", "altWeek", "altTeam", "altOpponent", "altWeek2", "altTeam2", "altOpponent2"] : templates[kind].map((t) => t.col);
   const onFile = async (f: File) => { setFileName(f.name); const t = await f.text(); setText(t); setReport(null); start(async () => { const a = await analyzeCsv(kind, t); setAnalysis(a); setMapping(a.mapping as Record<string, string | null>); }); };
   const run = (dryRun: boolean) => start(async () => { const r = await importCsv(kind, seasonId, text, mapping as Mapping | ResultMapping, dryRun); setReport(r); toast(dryRun ? `Dry run: ${r.summary.created} to create, ${r.summary.errors} errors` : `Imported: ${r.summary.created} created, ${r.summary.updated} updated`, r.ok ? "success" : "error"); });
   return (
